@@ -54,5 +54,75 @@ if st.button("Analyze"):
             st.write("- Drug B: 10mg, once daily (mock)")
         else:
             st.write("No medical text provided.")
-            
+            {
+  "interactions": {
+    "aspirin": {
+      "ibuprofen": {
+        "severity": "high",
+        "note": "Increases risk of stomach bleeding"
+      }
+    }
+  },
+  "dosage": {
+    "aspirin": {
+      "child": "Not recommended under 12",
+      "adult": "300-600 mg every 4-6 hours",
+      "senior": "Lower dose (75-300 mg/day)"
+    },
+    "paracetamol": {
+      "child": "250 mg every 6 hours",
+      "adult": "500 mg every 6 hours",
+      "senior": "500 mg every 8 hours"
+    }
+  },
+  "alternatives": {
+    "ibuprofen": ["paracetamol"],
+    "aspirin": ["acetaminophen"]
+  }
+}
+        # frontend/app.py
+import streamlit as st
+import requests
 
+st.title("💊 AI Prescription Verifier")
+
+st.markdown("Enter patient details and check drug interactions, dosages & alternatives.")
+
+age = st.number_input("Patient Age", min_value=1, max_value=120, value=30)
+drugs = st.text_input("Drugs (comma separated)", "aspirin, ibuprofen")
+
+if st.button("Analyze"):
+    drug_list = [d.strip() for d in drugs.split(",")]
+    payload = {"drugs": drug_list, "age": age}
+
+    res = requests.post("http://127.0.0.1:8000/analyze", json=payload)
+    if res.status_code == 200:
+        result = res.json()
+        st.subheader("🚨 Interactions")
+        st.json(result["interactions"])
+
+        st.subheader("💉 Dosage Recommendations")
+        st.json(result["dosage"])
+
+        st.subheader("🔄 Alternatives")
+        st.json(result["alternatives"])
+    else:
+        st.error("Error contacting backend API")
+
+# backend/services/nlp.py
+from transformers import pipeline
+
+# Load a biomedical NER model (pre-trained for drug/medical terms)
+# You can change to another model like "d4data/biomedical-ner-all"
+nlp = pipeline("ner", model="dslim/bert-base-NER", aggregation_strategy="simple")
+
+def extract_drug_entities(text: str):
+    """
+    Extract drug names (and possibly dosage info if detected).
+    """
+    entities = nlp(text)
+    drugs = []
+    for ent in entities:
+        if ent["entity_group"] in ["DRUG", "CHEMICAL", "MISC", "ORG"]:  # adjust depending on model
+            drugs.append(ent["word"])
+    return list(set(drugs))  # unique drug list
