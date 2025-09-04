@@ -54,32 +54,7 @@ if st.button("Analyze"):
             st.write("- Drug B: 10mg, once daily (mock)")
         else:
             st.write("No medical text provided.")
-            {
-  "interactions": {
-    "aspirin": {
-      "ibuprofen": {
-        "severity": "high",
-        "note": "Increases risk of stomach bleeding"
-      }
-    }
-  },
-  "dosage": {
-    "aspirin": {
-      "child": "Not recommended under 12",
-      "adult": "300-600 mg every 4-6 hours",
-      "senior": "Lower dose (75-300 mg/day)"
-    },
-    "paracetamol": {
-      "child": "250 mg every 6 hours",
-      "adult": "500 mg every 6 hours",
-      "senior": "500 mg every 8 hours"
-    }
-  },
-  "alternatives": {
-    "ibuprofen": ["paracetamol"],
-    "aspirin": ["acetaminophen"]
-  }
-}
+           
         # frontend/app.py
 import streamlit as st
 import requests
@@ -126,3 +101,4 @@ def extract_drug_entities(text: str):
         if ent["entity_group"] in ["DRUG", "CHEMICAL", "MISC", "ORG"]:  # adjust depending on model
             drugs.append(ent["word"])
     return list(set(drugs))  # unique drug list
+
